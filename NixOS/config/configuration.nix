@@ -83,6 +83,25 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  # Enable unstable packages
+  let
+  unstableTarball =
+    fetchTarball
+      https://github.com/NixOS/nixpkgs-channels/archive/nixos-unstable.tar.gz;
+in
+{
+  imports =
+    [ # Include the results of the hardware scan.
+      ./hardware-configuration.nix
+    ];
+  nixpkgs.config = {
+    packageOverrides = pkgs: with pkgs; {
+      unstable = import unstableTarball {
+        config = config.nixpkgs.config;
+      };
+    };
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.mateo = {
     isNormalUser = true;
