@@ -1,2 +1,2 @@
 # dotfiles
-My configs and other stuff
+My poorly made NixOS config (IN PROGRESS)

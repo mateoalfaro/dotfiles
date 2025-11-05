@@ -2,25 +2,33 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ unstable, config, pkgs, ... }:
 
 {
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./desktop.nix
+      ./gaming.nix
     ];
 
-  # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  # Use latest kernel.
-  #  boot.kernelPackages = pkgs.linuxPackages_latest;
+  nixpkgs.config.packageOverrides = pkgs: {
+    nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/main.tar.gz") {
+      inherit pkgs;
+    };
+  };
 
   # NVIDIA
   hardware.graphics.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.nvidia.open = true;  # see the note above
+  hardware.nvidia.open = true;
+
+  # Bootloader.
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
 
   networking.hostName = "nixos"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
@@ -31,6 +39,12 @@
 
   # Enable networking
   networking.networkmanager.enable = true;
+
+  # Enable Bluetooth
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+  };
 
   # Set your time zone.
   time.timeZone = "America/Costa_Rica";
@@ -50,81 +64,30 @@
     LC_TIME = "es_CR.UTF-8";
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-
-  # Enable the KDE Desktop Environment.
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.wayland.enable = true;
-  services.desktopManager.plasma6.enable = true;
-
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
     variant = "";
   };
 
-  # Enable sound with pipewire.
-  services.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
-  };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
-
-  # Enable unstable packages
-  let
-  unstableTarball =
-    fetchTarball
-      https://github.com/NixOS/nixpkgs-channels/archive/nixos-unstable.tar.gz;
-in
-{
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
-  nixpkgs.config = {
-    packageOverrides = pkgs: with pkgs; {
-      unstable = import unstableTarball {
-        config = config.nixpkgs.config;
-      };
-    };
-  };
-
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.mateo = {
+  users.users.jafed = {
     isNormalUser = true;
-    description = "mateo";
+    description = "jafed";
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-     google-chrome
-     heroic
-     stremio
-     vesktop
-     vlc
-    ];
+    unstable.cider-2
+    google-chrome
+    stremio
+    vesktop
+    github-desktop
+];
   };
 
-  # Steam packages
-  programs.steam.enable = true;
-  programs.steam.extraCompatPackages = with pkgs; [
-  proton-ge-bin
-  ];
+  services.flatpak.enable = true;
 
   # Enable automatic login for the user.
-  services.displayManager.autoLogin.enable = true;
-  services.displayManager.autoLogin.user = "mateo";
+  services.getty.autologinUser = "jafed";
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -132,7 +95,11 @@ in
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-   lato
+  appimage-run
+  git
+  gnome-bluetooth
+  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+  #  wget
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -162,4 +129,10 @@ in
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.05"; # Did you read the comment?
 
+   # Enable automatic garbage collection - please use!
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-older-than 7d";
+  };
 }
