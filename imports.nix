@@ -12,6 +12,9 @@
     ./modules/system.nix
     ./modules/users.nix
 
+    # Desktop Environment
+    ./modules/gnome.nix
+
     # Extras
     ./modules/gaming.nix
   ];
