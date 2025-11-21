@@ -9,7 +9,11 @@
   ];
 
   environment.gnome.excludePackages = with pkgs; [
+    epiphany
+    snapshot
     gnome-tour
+    gnome-contacts
+    gnome-maps
     gnome-user-docs
   ];
 
